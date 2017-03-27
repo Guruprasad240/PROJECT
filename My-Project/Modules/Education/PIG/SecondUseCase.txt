@@ -1,0 +1,37 @@
+Q) I n the literate list how many are married and how many are unmarried ?
+--Loading Data into Pig
+Loadingdata = LOAD '/home/hduser/census' USING PigStorage(,) as (age:int,education : chararray,martastatus : chararray,gender : chararray,taxfilerstatus : chararray,income : double,parents : chararray,countryofbirth : chararray,citizenship : chararray,weekworke : int);
+--Filtering literates and married Data
+educatedmarried = FILTER loadingdata BY education != 'Less than 1st grade' AND education != 'Children' AND maritalstatus != 'Never Married';
+--Filtering literates and married Data
+educatedunmarried = FILTER loadingdata BY education != 'Less than 1st grade' AND education != 'Children' AND maritalstatus = 'Never Married';
+--grouping the educated married data to find the count
+groupingeducatedmarried = GROUP educatedmarried all;
+--grouping the educated unmarried data to find the count
+groupingeducatedunmarried = GROUP educatedunmarried all;
+--Counting the educated and married details 
+countingeducatedmarrieddetails = FOREACH groupingeducatedmarried GENERATE COUNT(educatedmarried.maritalstatus) as em ,1 as keyforjoin;
+--Counting the educated and unmarried details 
+countingeducatedunmarrieddetails = FOREACH groupingeducatedunmarried GENERATE COUNT(educatedunmarried.maritalstatus) as eum,1 as keyforjoin;
+--joining all requried data
+joiningdata = JOIN em by keyforjoin,eum by keyforjoin;
+--Grouping joindata
+groupingjoindata = GROUP joiningdata all;
+--find the all details
+requriedoutput = FOREACH groupingjoindata GENERATE (em+eum) as TotalEducators,em as TotalEducatedandMarried,eum as TotalEducatedandUnMarried;
+-- Display the result
+DUMP requriedoutput;
+
+RESULT:-
+---------
+
+TotalEducators			TotalEducatedandMarried				TotalEducatedandUnMarried
+455027				338195						116832
+
+-- Storing the Output
+
+STORE requriedoutput /home/hduser/ProjectResults/Education/secondusecase ;
+
+
+
+   

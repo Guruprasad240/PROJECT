@@ -1,0 +1,34 @@
+ Q) Find out the LITERATE and ILLITERATE Percentage from hr gien list ?
+
+--Loading Data into Pig
+Loadingdata = LOAD '/home/hduser/census' USING PigStorage(,) as (age:int,education : chararray,martastatus : chararray,gender : chararray,taxfilerstatus : chararray,income : double,parents : chararray,countryofbirth : chararray,citizenship : chararray,weekworke : int);
+--Filtering Educating Data
+literatedata = Filter Loadingdata BY education != 'Less than 1st grade' AND education != 'Children';
+--Filtering UnEducating Data
+illiteratedata = Filter Loadingdata BY education == 'Less than 1st grade' OR education == 'Children';
+--Grouping literatedata
+groupinglitertedata = GROUP literatedata all;
+--Grouping illiteratedata
+groupingillitertedata = GROUP illiteratedata all;
+--Counting Illiteraters
+literates = FOREACH  groupinglitertedata GENERATE COUNT(literatedata.education) as literatelist,1 as keyforjoin;
+--Counting Illiteraters
+illiterates = FOREACH  groupinglitertedata GENERATE COUNT(illiteratedata.education) as illiteratelist,1 as keyforjoin;
+--Keeping Requried Data in a Single Bag
+joiningdata = JOIN literatelist by keyforjoin,illiteratelist by keyforjoin;
+--grouping joineddata
+groupingjoiningdata = GROUP joiningdata all;
+--finding percentages
+requriedoutput = FOREACH groupingjoiningdata GENERATE SUM(literatelist+illiteratelist) as TotalPeople,(literatelist*100)/(literatelist+illiteratelist) as LiteratePercentage,(illiteratelist*100)/(literatelist+illiteratelist) as IlliteratePercentage;
+--For Displaying Output 
+DUMP requriedoutut;
+--To Store
+STORE requriedoutput /home/hduser/ProjectResults/Education/firstusecase 
+
+
+RESULT:-
+--------
+
+TotalPeople		literatepercentage		illiteratepercentage
+596522			75				24
+

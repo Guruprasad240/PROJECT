@@ -1,0 +1,37 @@
+Q) How many of Non-Citizen People are studying their MS in US and tell me the INDIAN people percentage ?
+--Loading Data into Pig
+Loadingdata = LOAD '/home/hduser/census' USING PigStorage(,) as (age:int,education : chararray,martastatus : chararray,gender : chararray,taxfilerstatus : chararray,income : double,parents : chararray,countryofbirth : chararray,citizenship : chararray,weekworke : int);
+--Filtering Data who are notcizen of us and country of birth is not in United-States
+filtereddata = FILTER loadingdata BY (countryofbirth != 'United-States' AND education == 'Masters degree(MA MS MEng MEd MSW MBA)') AND (citizenship == 'Native- Born in Pureo Rico or US Outlying' OR citizenship == 'Foreign born- Not a citizen of US'); 
+--Finding Indian details
+Indians = FILTER filtereddata BY countryofbirth == 'India';
+--Finding foreigners details
+Foreigners = FILTER filtereddata BY countryofbirth != 'India';
+--Grouping Indians to find Count
+groupingindians = GROUP indians all;
+--Grouping  Foreigners to find Count
+groupingforeigners = GROUP indians all;
+--Counting Indians who are studing their MS in US
+coountofindians = FOREACH groupingindians GENERATE COUNT(Indians.education) as ic,1 as keyforjoin;
+--Counting Foreigners except India who are studing their MS in US
+coountofindians = FOREACH groupingindians GENERATE COUNT(Foreigners.education) as fc,1 as keyforjoin;
+--Keeping needed data into a sigle bag
+joiningdetails = JOIN ic by keyforjoin,fc by keyforjoin
+--grouping joineddata
+groupingjoiningdetails = GROUP joiningdetails all;
+--finding percentages
+Result = FOREACH groupingjoiningdetails GENERATE (ic+fc) as Total,((fc*100)/(ic+fc)) as Foreignerpercentage,((ic*100)/(ic+fc)) as Indianspercentage;
+--Display the result
+DUMP Result;
+
+RESULT:-
+--------
+Total			forignerpercentage			indianpercentage
+1150			89					10
+
+--To Store the Result
+Store Result /home/hduser/ProjectResults/Education/Thierdusecase 
+
+
+
+ 
